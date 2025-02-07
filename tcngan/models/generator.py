@@ -28,7 +28,6 @@ class Generator(nn.Module):
         
         self.final = nn.Sequential(
             nn.Conv1d(in_dim, output_dim, 3, padding=1),
-            nn.Tanh()
         )
 
     def forward(self, z):
