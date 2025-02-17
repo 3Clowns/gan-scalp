@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-from models.generator import TemporalBlock
 
 class Discriminator(nn.Module):
     def __init__(self, input_dim, hidden_dims=[128, 64]):

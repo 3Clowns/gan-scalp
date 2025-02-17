@@ -4,7 +4,7 @@ import torch.nn as nn
 from tcngan.models.temporal_block import TemporalBlock
 
 class Generator(nn.Module):
-    def __init__(self, input_dim, output_dim, seq_len, hidden_dims=[16, 32]):
+    def __init__(self, input_dim, output_dim, seq_len, hidden_dims=[32]):
         """
         Initializes a model (e.g., a Generator) for processing sequential data.
 
@@ -20,10 +20,12 @@ class Generator(nn.Module):
         self.hidden_dims = hidden_dims
         self.input_dim = input_dim
         self.rnn = nn.LSTM(input_dim, hidden_dims[0], batch_first=True)
-        self.rnn_layers = nn.ModuleList([
+        '''        
+            self.rnn_layers = nn.ModuleList([
             nn.LSTM(hidden_dims[i], hidden_dims[i + 1], batch_first=True)
             for i in range(len(hidden_dims) - 1)
         ])
+        '''
         self.fc = nn.Linear(hidden_dims[-1], output_dim)
 
     def forward(self, z):
@@ -32,7 +34,7 @@ class Generator(nn.Module):
         """
         z = z.repeat(1, self.seq_len, 1)
         out, _ = self.rnn(z)
-        for rnn_layer in self.rnn_layers:
-            out, _ = rnn_layer(out)
+        '''for rnn_layer in self.rnn_layers:
+            out, _ = rnn_layer(out)'''
         out = self.fc(out)
         return out

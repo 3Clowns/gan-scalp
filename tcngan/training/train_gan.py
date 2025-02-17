@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-
-from utils.constants import LATENT_DIM
+import time
+from tcngan.utils.constants import LATENT_DIM
 def train_gan(generator, discriminator, dataloader, epochs, lr=0.0002):
     """
     Trains a Generative Adversarial Network (GAN).
@@ -19,6 +19,7 @@ def train_gan(generator, discriminator, dataloader, epochs, lr=0.0002):
     
     for epoch in range(epochs):
         for real_data in dataloader:
+            start = time.time()
             batch_size = real_data.size(0)
             
             opt_d.zero_grad()
@@ -35,3 +36,4 @@ def train_gan(generator, discriminator, dataloader, epochs, lr=0.0002):
             g_loss = criterion(validity, torch.ones(batch_size, 1))
             g_loss.backward()
             opt_g.step()
+            print(f'Batch done in {time.time() - start} seconds')

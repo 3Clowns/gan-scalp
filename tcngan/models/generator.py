@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from models.generator import TemporalBlock
+from tcngan.models.temporal_block import TemporalBlock
 
 class Generator(nn.Module):
     def __init__(self, input_dim, output_dim, seq_len, hidden_dims=[64, 128]):

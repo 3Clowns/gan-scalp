@@ -1,13 +1,16 @@
 import numpy as np
+import pandas as pd
 from torch.utils.data import DataLoader 
 
 from models.generator import Generator
 from models.discriminator import Discriminator
 from data.dataset import TimeSeriesDataset
 from training.train_gan import train_gan
-from utils.constants import LATENT_DIM, OUTPUT_DIM, WINDOW_SIZE
+from tcngan.utils.constants import LATENT_DIM, OUTPUT_DIM, WINDOW_SIZE
 
-data = np.loadtxt("data/timeseries.csv")
+data = pd.read_csv('data/stocks.csv')
+data = data['close'].head(100000)
+data = np.array(data)
 
 dataset = TimeSeriesDataset(data, seq_len=WINDOW_SIZE)
 dataloader = DataLoader(
@@ -28,4 +31,4 @@ discriminator = Discriminator(
     hidden_dims=[128, 64]
 )
 
-train_gan(generator, discriminator, dataloader, epochs=1000)
+train_gan(generator, discriminator, dataloader, epochs=1)
