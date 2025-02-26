@@ -187,6 +187,7 @@ def objective(trial, gpu_id=None):
             ent_coef=ent_coef,
             device=device,
             logging_callback=custom_log,
+            eval_freq=1000,
         )
 
         profit, _, _, _ = evaluate_agent(model, df_val[ticker], max_steps=len(df_val[ticker]), window_size=window_size, alpha=0, eta=0, action_reward=0, war=0)
@@ -289,4 +290,4 @@ else:
 data = prepare_data(data)
 df_train, df_val, df_test = time_split(data)
 ticker = "VTBR"
-best_params, best_value = optimize_hyperparameters_parallel(df_train, df_val, ticker, n_trials=100)
+best_params, best_value = optimize_hyperparameters_parallel(df_test, df_val, ticker, n_trials=100)
