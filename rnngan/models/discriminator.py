@@ -4,7 +4,7 @@ import torch.nn as nn
 from tcngan.models.temporal_block import TemporalBlock
 
 class Discriminator(nn.Module):
-    def __init__(self, input_dim, hidden_dims=[32]):
+    def __init__(self, input_dim, hidden_dims=[32, 16]):
         """
         Initializes a model (e.g., a Discriminator) for processing sequential data.
 
