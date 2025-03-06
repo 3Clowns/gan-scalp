@@ -1,7 +1,10 @@
 import torch
 import torch.nn as nn
 import time
-from rnngan.utils.constants import LATENT_DIM
+import numpy as np
+import tqdm
+import wandb
+from rnngan.utils.constants import LATENT_DIM, DEVICE
 def train_gan(generator, discriminator, dataloader, epochs, lr=0.0002):
     """
     Trains a Generative Adversarial Network (GAN).
@@ -15,27 +18,36 @@ def train_gan(generator, discriminator, dataloader, epochs, lr=0.0002):
     """
     opt_g = torch.optim.Adam(generator.parameters(), lr=lr)
     opt_d = torch.optim.Adam(discriminator.parameters(), lr=lr)
-
+    d_loss_history = []
+    g_loss_history = []
     criterion = nn.BCELoss()
     st = 0
     fn = 0
-    for epoch in range(epochs):
+    import tqdm  # Ensure tqdm is imported if not already
+
+    for epoch in tqdm.tqdm(range(epochs), desc="Epochs"):
         st = time.time()
-        for real_data in dataloader:
+        epoch_d_loss = []
+        epoch_g_loss = []
+        for real_data in tqdm.tqdm(dataloader, leave=False, desc="Batches"):
             start = time.time()
             batch_size = real_data.size(0)
-            real_labels = torch.ones(batch_size, 1)
-            fake_labels = torch.zeros(batch_size, 1)
-            real_data = real_data.unsqueeze(-1)
+            real_labels = torch.ones(batch_size, 1).to(DEVICE)
+            fake_labels = torch.zeros(batch_size, 1).to(DEVICE)
+            real_data = real_data.unsqueeze(-1).to(DEVICE)
+
             # Train Discriminator
             opt_d.zero_grad()
             real_outputs = discriminator(real_data)
             d_real_loss = criterion(real_outputs, real_labels)
 
-            z = torch.randn(batch_size, real_data.size(1), generator.input_dim)
+            z = torch.randn(batch_size, real_data.size(1), generator.input_dim).to(DEVICE)
+
             fake_data = generator(z)
+            #print(fake_data.shape)
             fake_outputs = discriminator(fake_data.detach())
             d_fake_loss = criterion(fake_outputs, fake_labels)
+            print(d_fake_loss)
 
             d_loss = d_real_loss + d_fake_loss
             d_loss.backward()
@@ -47,6 +59,29 @@ def train_gan(generator, discriminator, dataloader, epochs, lr=0.0002):
             g_loss = criterion(fake_outputs, real_labels)
             g_loss.backward()
             opt_g.step()
-            print(f'Batch done in {time.time() - start} seconds')
+            wandb.log({
+                "d_loss_batch": d_loss.item(),
+                "g_loss_batch": g_loss.item()
+            })
+            d_loss_history.append(d_loss)
+            g_loss_history.append(g_loss)
+            epoch_d_loss.append(d_loss)
+            epoch_g_loss.append(g_loss)
         fn = time.time() - st
-        print(f'Epoch {epoch} done in {fn} seconds.')
+        print(f'Epoch {epoch} done in {fn} seconds. D_loss {d_loss_history[-1]:.4f}. G_loss {g_loss_history[-1]:.4f}')
+        wandb.log({
+            "d_loss_epoch": sum(epoch_d_loss)/len(epoch_d_loss),
+            "g_loss_epoch": sum(epoch_g_loss)/len(epoch_g_loss),
+            "epoch_time": time.time() - st
+        })
+    checkpoint = {
+        "epoch": epochs,
+        "generator": generator.state_dict(),
+        "discriminator": discriminator.state_dict(),
+        "optimizer_g": opt_g.state_dict(),
+        "optimizer_d": opt_d.state_dict(),
+        "d_loss_history": d_loss_history,
+        "g_loss_history": g_loss_history
+    }
+    torch.save(checkpoint, f"checkpoint_epoch_{epochs}.pt")
+    print(f"Saved checkpoint for  {epochs} epochs")

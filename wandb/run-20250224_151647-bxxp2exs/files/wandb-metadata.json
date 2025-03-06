@@ -1,0 +1,44 @@
+{
+  "os":  "macOS-15.1.1-arm64-arm-64bit",
+  "python":  "CPython 3.12.1",
+  "startedAt":  "2025-02-24T12:16:47.319010Z",
+  "program":  "/Users/borisgerasimov/hse/gan-scalp/tcngan/main.py",
+  "codePath":  "tcngan/main.py",
+  "git":  {
+    "remote":  "https://github.com/3Clowns/gan-scalp.git",
+    "commit":  "10eb0c7614bd6586f5fe9226e1fc225279174334"
+  },
+  "email":  "funandoverthinking@gmail.com",
+  "root":  "/Users/borisgerasimov/hse/gan-scalp",
+  "host":  "MacBook-Air-Boris.local",
+  "executable":  "/usr/local/bin/python3",
+  "codePathLocal":  "tcngan/main.py",
+  "cpu_count":  8,
+  "cpu_count_logical":  8,
+  "disk":  {
+    "/":  {
+      "total":  "245107195904",
+      "used":  "215779962880"
+    },
+    "/System/Volumes/Data":  {
+      "total":  "245107195904",
+      "used":  "215779962880"
+    }
+  },
+  "memory":  {
+    "total":  "8589934592"
+  },
+  "cpu":  {
+    "count":  8,
+    "countLogical":  8
+  },
+  "apple":  {
+    "name":  "Apple M1",
+    "ecpuCores":  4,
+    "pcpuCores":  4,
+    "gpuCores":  7,
+    "memoryGb":  8,
+    "swapTotalBytes":  "6442450944",
+    "ramTotalBytes":  "8589934592"
+  }
+}

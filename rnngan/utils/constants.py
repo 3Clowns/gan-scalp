@@ -6,9 +6,9 @@ import torch
 ###################################################################################
 
 # Define number of tickers in universe
-N_ASSETS = 5
+N_ASSETS = 1
 # Data sampling interval (15 minutes)
-INTERVAL_MINUTES = 15
+INTERVAL_MINUTES = 1
 # Define number of trading days in a year
 WORK_DAYS_PER_YEAR = 252
 # Stock Market Hours (10:00 AM - 6:40 PM MSK)

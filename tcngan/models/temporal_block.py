@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 from torch.nn.utils import weight_norm
 
@@ -11,7 +10,7 @@ class Chomp1d(nn.Module):
         return x[:, :, :-self.chomp_size].contiguous()
 
 class TemporalBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, dilation, dropout=0.2):
+    def __init__(self, in_channels, out_channels, kernel_size, dilation, padding, dropout=0.2):
         """
         Initializes a temporal block for a Temporal Convolutional Network (TCN).
 
@@ -24,7 +23,6 @@ class TemporalBlock(nn.Module):
         """
         super(TemporalBlock, self).__init__()
         
-        padding = (kernel_size - 1) * dilation
         
         self.conv1 =  weight_norm(nn.Conv1d(
             in_channels,
@@ -48,24 +46,22 @@ class TemporalBlock(nn.Module):
         self.relu2 = nn.ReLU()
         self.dropout2 = nn.Dropout(dropout)
 
+        if padding == 0:
+            self.net = nn.Sequential(self.conv1, self.relu1, self.dropout1, self.conv2, self.relu2, self.dropout2)
+        else:
+            self.net = nn.Sequential(self.conv1, self.chomp1, self.relu1, self.dropout1, self.conv2, self.chomp2, self.relu2, self.dropout2)
+
         self.downsample = nn.Conv1d(in_channels, out_channels, 1) if in_channels != out_channels else None
         self.relu = nn.ReLU()
+        self.init_weights()
+
+    def init_weights(self):
+        self.conv1.weight.data.normal_(0, 0.5)
+        self.conv2.weight.data.normal_(0, 0.5)
+        if self.downsample is not None:
+            self.downsample.weight.data.normal_(0, 0.5)
 
     def forward(self, x):
-        """
-        Performs a forward pass through the temporal block.
-        """
-        residual = x
-        out = self.conv1(x)
-        out = self.chomp1(out)
-        out = self.relu1(out)
-        out = self.dropout1(out)
-
-        out = self.conv2(out)
-        out = self.chomp2(out)
-        out = self.relu2(out)
-        out = self.dropout2(out)
-
-        if self.downsample is not None:
-            residual = self.downsample(residual)
-        return self.relu(out + residual)
+        out = self.net(x)
+        res = x if self.downsample is None else self.downsample(x)
+        return out, self.relu(out + res)

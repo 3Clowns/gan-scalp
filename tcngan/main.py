@@ -1,34 +1,45 @@
 import numpy as np
 import pandas as pd
+import wandb
 from torch.utils.data import DataLoader 
 
 from models.generator import Generator
 from models.discriminator import Discriminator
 from data.dataset import TimeSeriesDataset
 from training.train_gan import train_gan
-from tcngan.utils.constants import LATENT_DIM, OUTPUT_DIM, WINDOW_SIZE
+from utils.constants import LATENT_DIM, BATCH_SIZE, WINDOW_SIZE, DEVICE
 
-data = pd.read_csv('data/stocks.csv')
-data = data['close'].head(100000)
+data = pd.read_csv('tcngan/data/stocks.csv')
+data = data[data["Ticker"] == "LKOH"]
+data = np.log(data['close'] / data['close'].shift(1))
+data = data.dropna()
 data = np.array(data)
 
 dataset = TimeSeriesDataset(data, seq_len=WINDOW_SIZE)
 dataloader = DataLoader(
     dataset,
-    batch_size=32,
+    batch_size=BATCH_SIZE,
     shuffle=False
 )
-
+print(DEVICE)
 generator = Generator(
     input_dim=LATENT_DIM, 
-    output_dim=OUTPUT_DIM,
-    seq_len=WINDOW_SIZE,
-    hidden_dims=[64, 128]
-)
+    hidden_dim=10
+).to(DEVICE)
 
 discriminator = Discriminator(
-    input_dim=OUTPUT_DIM,
-    hidden_dims=[128, 64]
+    seq_len=WINDOW_SIZE,
+    hidden_dim=10
+).to(DEVICE)
+
+wandb.init(
+    project = "scalp_gan",
+    config = {
+        "epochs": 20,
+        "batch_size": BATCH_SIZE,
+        "optimizer": "Adam",
+        "Loss": "BCE"
+    }
 )
 
 train_gan(generator, discriminator, dataloader, epochs=1)

@@ -1,10 +1,8 @@
 import torch
 import torch.nn as nn
 
-from tcngan.models.temporal_block import TemporalBlock
-
 class Generator(nn.Module):
-    def __init__(self, input_dim, output_dim, seq_len, hidden_dims=[32]):
+    def __init__(self, input_dim, output_dim, seq_len, hidden_dims=[16, 32]):
         """
         Initializes a model (e.g., a Generator) for processing sequential data.
 
@@ -32,7 +30,7 @@ class Generator(nn.Module):
         """
             Processes input noise vector (z) and generates the output sequence.
         """
-        z = z.repeat(1, self.seq_len, 1)
+        #z = z.repeat(1, self.seq_len, 1)
         out, _ = self.rnn(z)
         '''for rnn_layer in self.rnn_layers:
             out, _ = rnn_layer(out)'''

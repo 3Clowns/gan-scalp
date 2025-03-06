@@ -1,34 +1,20 @@
-import torch
 import torch.nn as nn
 
-from tcngan.models.temporal_block import TemporalBlock
+from models.temporal_block import TemporalBlock
+from utils.constants import N_ASSETS
 
 class Discriminator(nn.Module):
-    def __init__(self, input_dim, hidden_dims=[128, 64]):
-        """
-        Initializes a model (e.g., a Discriminator) for processing sequential data.
-
-        Args:
-            input_dim (int): Dimensionality of the input data (e.g., number of features).
-            hidden_dims (list, optional): List of integers specifying the number of channels 
-                                        in each hidden layer. Defaults to [128, 64].
-        """
+    def __init__(self, seq_len, hidden_dim = 10):
         super().__init__()
-        self.layers = nn.ModuleList()
-        
-        in_dim = input_dim
-        for hidden in hidden_dims:
-            self.layers.append(
-                TemporalBlock(in_dim, hidden, kernel_size=3, dilation=2)
-            )
-            in_dim = hidden
-        
-        self.final = nn.Conv1d(in_dim, 1, 3, padding=1)
+        self.tcn = nn.ModuleList([TemporalBlock(N_ASSETS, hidden_dim, kernel_size=1, dilation=1, padding=0),
+                                 *[TemporalBlock(hidden_dim, hidden_dim, kernel_size=2, dilation=i, padding=i) for i in [1, 2, 4, 8]]])
+        self.last = nn.Conv1d(hidden_dim, 1, kernel_size=1, dilation=1)
+        self.to_prob = nn.Sequential(nn.Linear(seq_len, 1), nn.Sigmoid())
 
     def forward(self, x):
-        """
-        Processes the input sequence using the defined layers.
-        """
-        for layer in self.layers:
-            x = layer(x)
-        return torch.sigmoid(self.final(x).view(x.size(0), -1))
+        skip_layers = []
+        for layer in self.tcn:
+            skip, x = layer(x)
+            skip_layers.append(skip)
+        x = self.last(x + sum(skip_layers))
+        return self.to_prob(x).squeeze()

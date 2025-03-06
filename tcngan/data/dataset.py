@@ -9,8 +9,9 @@ class TimeSeriesDataset(Dataset):
         self.seq_len = seq_len
 
     def __len__(self):
-        return len(self.data) - self.seq_len
+        return len(self.data) - self.seq_len + 1
 
     def __getitem__(self, idx):
         x = self.data[idx:idx + self.seq_len]
-        return torch.FloatTensor(x)
+        x = torch.FloatTensor(x).unsqueeze(0)
+        return x
