@@ -29,14 +29,17 @@ generator = Generator(
     input_dim=LATENT_DIM, 
     output_dim=OUTPUT_DIM,
     seq_len=WINDOW_SIZE,
-<<<<<<< HEAD
     hidden_dims=[64]
 )
 
 discriminator = Discriminator(
     input_dim=OUTPUT_DIM,
-    hidden_dims=[64]
-=======
+    hidden_dims=[64],
+    hidden_dims=[10]
+).to(DEVICE)
+
+discriminator = Discriminator(
+    input_dim=OUTPUT_DIM,
     hidden_dims=[10]
 ).to(DEVICE)
 
@@ -53,7 +56,6 @@ wandb.init(
         "optimizer": "Adam",
         "loss": "BCEWithLogitsLoss"
     }
->>>>>>> 17bfbeea1a419a6f0ce634e9f3c611f36b3aaf82
 )
 
 train_gan(generator, discriminator, dataloader, epochs=20)
