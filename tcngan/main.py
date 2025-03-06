@@ -1,27 +1,36 @@
 import numpy as np
 import pandas as pd
-import wandb
 from torch.utils.data import DataLoader 
+from torch import optim
 
-from models.generator import Generator
-from models.discriminator import Discriminator
-from data.dataset import TimeSeriesDataset
-from training.train_gan import train_gan
-from utils.constants import LATENT_DIM, BATCH_SIZE, WINDOW_SIZE, DEVICE
+from gan import Discriminator, Generator
+from dataset import TimeSeriesDataset
+from train_gan import train_gan
+from constants import LATENT_DIM, BATCH_SIZE, WINDOW_SIZE, DEVICE
 
-data = pd.read_csv('tcngan/data/stocks.csv')
+data = pd.read_csv('stocks.csv')
 data = data[data["Ticker"] == "LKOH"]
-data = np.log(data['close'] / data['close'].shift(1))
-data = data.dropna()
-data = np.array(data)
+data = pd.DataFrame({
+    'log_return': np.log(data['close'] / data['close'].shift(1))
+}).dropna().tail(131040)
 
-dataset = TimeSeriesDataset(data, seq_len=WINDOW_SIZE)
+print(f'Use device: {DEVICE}')
+print(f"Data size = {data.shape}")
+print(type(data['log_return'].values,))
+
+N_EPOCHS = 800
+PLOT_FREQUENCY = 50
+SAVE_FREQUENCY = 50
+
+dataset = TimeSeriesDataset(data['log_return'].values, seq_len=WINDOW_SIZE)
 dataloader = DataLoader(
     dataset,
     batch_size=BATCH_SIZE,
-    shuffle=False
+    shuffle=False,
+    num_workers=8,
+    persistent_workers=True
 )
-print(DEVICE)
+
 generator = Generator(
     input_dim=LATENT_DIM, 
     hidden_dim=10
@@ -32,14 +41,10 @@ discriminator = Discriminator(
     hidden_dim=10
 ).to(DEVICE)
 
-wandb.init(
-    project = "scalp_gan",
-    config = {
-        "epochs": 20,
-        "batch_size": BATCH_SIZE,
-        "optimizer": "Adam",
-        "Loss": "BCE"
-    }
-)
+generator_optimizer = optim.Adam(generator.parameters(), lr=0.0001, betas=(0.5, 0.999))
+discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.0001, betas=(0.5, 0.999))
 
-train_gan(generator, discriminator, dataloader, epochs=1)
+scheduler_g = optim.lr_scheduler.ReduceLROnPlateau(generator_optimizer, 'min', patience=5)
+scheduler_d = optim.lr_scheduler.ReduceLROnPlateau(discriminator_optimizer, 'min', patience=5)
+
+discriminator_losses, generator_losses = train_gan(generator, discriminator, generator_optimizer, discriminator_optimizer, dataloader, data, n_epochs=N_EPOCHS, plot_frequency=PLOT_FREQUENCY, save_frequency=SAVE_FREQUENCY, model_prefix='TCN')
