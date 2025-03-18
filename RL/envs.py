@@ -34,7 +34,7 @@ class MoexTradingEnv(gymnasium.Env, ABC):
         self.df = df.reset_index(drop=True)
         self.window_size = window_size
         self.action_space = spaces.Discrete(5)
-        self.aug_prob = 0.1
+        self.aug_prob = 0.0
         
         self.num_time_features = 12
         self.num_additional_info = 4 + 5 + 1  # +5 для маски действий
@@ -67,6 +67,7 @@ class MoexTradingEnv(gymnasium.Env, ABC):
         self.transfer_day_flag = False
         self.day_penalty = 10
         self.current_augmented_date = None
+        self.was_reset = 0
 
         def scale_reward_function(r):
             return r * self.scale_reward
@@ -393,6 +394,9 @@ class MoexTradingEnv(gymnasium.Env, ABC):
         
         
         return obs, reward, done, done, info
+    
+    def is_reset(self):
+        return self.was_reset
 
     def reset(self, seed=42, options=None):
         super().reset(seed=seed, options=options)
@@ -402,6 +406,7 @@ class MoexTradingEnv(gymnasium.Env, ABC):
         self.entry_step = 0
         self.row = 0
         self.current_augmented_date = None
+        self.was_reset += 1
         if hasattr(self, 'current_augmented_day'):
             del self.current_augmented_day
 
@@ -438,6 +443,9 @@ class TestingTradingEnv(MoexTradingEnv):
     
     def augment_data(self, obs_data, current_date):
         return super().augment_data(obs_data, current_date)
+    
+    def is_reset(self):
+        return super().is_reset()
     
 
     def calculate_metrics(self):

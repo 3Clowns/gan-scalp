@@ -37,7 +37,7 @@ def run_trial(args):
         run_name = f"trial_{params['trial_number']}_gpu_{gpu_id}"
         
         wandb.init(
-            project="RL MaskedPPO hps search 2.0 day_penalty=10 added to obs last minute. Bugfix",
+            project="RL MaskedPPO hps search 2.0 day_penalty=10 no augment big_data new_era fixed",
             reinit=True,
             name=run_name,
             config=params
@@ -218,18 +218,18 @@ def run_grid_search(df_train, df_val, ticker, n_trials=100, max_concurrent=6, gp
     return best_params, best_value, results
 
 if __name__ == "__main__":
-    filename = "data.pkl"
+    filename = "mid_data.pkl"
     directory_path = "./"
     path = os.path.join(directory_path, filename)
 
     if os.path.exists(path):
         data = load_dataset(filename)
     else:
-        data = create_dataset()
+        data = create_dataset(num_weeks=72)
         save_dataset(data, path)
 
     data = prepare_data(data)
-    df_train, df_val, df_test = time_split(data)
+    df_train, df_val, df_test = time_split(df_dict=data, train_ratio=0.7, val_ratio=0.15)
     ticker = "LKOH"
     n_gpus = torch.cuda.device_count()
     gpu_ids = list(range(n_gpus)) if n_gpus > 0 else [None]

@@ -18,14 +18,14 @@ global_tickers = ["VTBR", "LKOH"]
 extra_tickers = ["MOEXFN", "MOEXCN", "TRUR", ]
 
 
-def create_dataset(tickers=global_tickers, ):
-    print("Downloading started...")
+def create_dataset(tickers=global_tickers, num_weeks=36):
+    print("Fetching candles data started...")
     seven = datetime.timedelta(days=7)
     data = {}
 
     with requests.Session() as session:
         for i in tickers:
-            for weeks in range(36):
+            for weeks in range(num_weeks):
                 dt = friday - weeks * seven
                 candles = apimoex.get_market_candles(session, i, 1, str(dt - datetime.timedelta(days=5))[:-9],
                                                      str(dt)[:-9])

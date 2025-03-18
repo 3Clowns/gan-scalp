@@ -19,7 +19,9 @@ def evaluate_agent(model, df_val, max_steps, window_size, alpha, eta, action_rew
     wrong_actions = 0
     non_zero_actions = 0
 
-    while not done and steps < max_steps:
+    print("Evaluation started...")
+
+    while not done and steps < max_steps and env.env_method("is_reset")[0] < 2:
         action_masks = env.env_method("get_action_mask")[0]  #
         action, _ = model.predict(obs, deterministic=True, action_masks=action_masks)
 
@@ -29,13 +31,12 @@ def evaluate_agent(model, df_val, max_steps, window_size, alpha, eta, action_rew
             non_zero_actions += 1
 
         obs, rewards, dones, infos = env.step([action])
-
-        #if infos["Wrong Action"] == True:
-        #    wrong_actions += 1
-        # print(rewards, dones, infos)
+        done = dones[0]
 
         total_reward += rewards[0]
         steps += 1
+
+    print(f"Model successfully tested on {steps} steps")
 
     metrics = env.env_method("calculate_metrics")[0]
     env.close()
@@ -55,7 +56,9 @@ def test_agent(model, df_val, max_steps, window_size, alpha, eta, action_reward,
     non_zero_actions = 0
     infos = None
 
-    while not done and steps < max_steps:
+    print("Start testing agent...")
+
+    while not done and steps < max_steps and env.env_method("is_reset")[0] < 2:
         action_masks = env.env_method("get_action_mask")[0]  #
         action, _ = model.predict(obs, deterministic=True, action_masks=action_masks)
 
@@ -65,11 +68,12 @@ def test_agent(model, df_val, max_steps, window_size, alpha, eta, action_reward,
             non_zero_actions += 1
 
         obs, rewards, dones, infos = env.step([action])
+        done = dones[0]
 
         total_reward += rewards[0]
         steps += 1
 
-    # print(infos)
+    print(f"Model successfully tested on {steps} steps")
     
 
     metrics = env.env_method("calculate_metrics")[0]
@@ -93,7 +97,7 @@ class ValidationCallback(BaseCallback):
         self.war = war
         self.zero_actions_row = 0
         self.best_reward = -1
-        self.vc = vc
+        self.vc = vc # Validation callback 
         self.train_step = 0
         self.val_step = 0
         self.trial_logger = None
@@ -216,7 +220,7 @@ def test_agent_with_actions(model, df, max_steps, window_size, alpha=0, eta=0, a
         log_file.write(f"Started at: {timestamp}\n")
         log_file.write("-" * 50 + "\n\n")
         
-        while not done and n_steps < max_steps:
+        while not done and n_steps < max_steps and not env.env_method("is_reset")[0]:
             action_masks = env.env_method("get_action_mask")[0]  #
             action, _ = model.predict(obs, deterministic=True, action_masks=action_masks)
 
