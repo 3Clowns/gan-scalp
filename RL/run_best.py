@@ -49,13 +49,14 @@ fixed_params = {
         #"lstm_layers": 2,
         #"features_dim": 64,
         "ent_coef": 0.1,
+        "gae_lambda" : 0.99,
 }
 
 #model = PPO("MlpPolicy", vec_env, verbose=1,)
 model = MaskablePPO("MlpPolicy", env, verbose=1, **fixed_params,
-                gae_lambda=0.9)
+                gae_lambda=fixed_params["gae_lambda"])
     
-model = MaskablePPO.load("saved_models/trial_0_gpu_0") 
+# model = MaskablePPO.load("saved_models/trial_0_gpu_0")
 test_agent_with_actions(model, df_test[ticker], max_steps=len(df_val[ticker]),
             window_size=params['window_size'],
             alpha=0, eta=0, action_reward=0, war=0,
