@@ -58,7 +58,7 @@ class MoexTradingEnv(gymnasium.Env, ABC):
             override_scale_function = {"override": False, "function": lambda x: x}
 
         assert df.index.is_monotonic_increasing, "Dataframe index must be sorted"
-        assert not df[['open', 'high', 'low', 'close']].isnull().any().any(), "NaN values in OHLC data"
+        # assert not df[['open', 'high', 'low', 'close']].isnull().any().any(), "NaN values in OHLC data"
 
         self.df = df.reset_index(drop=True)
         self.window_size = window_size
@@ -98,6 +98,11 @@ class MoexTradingEnv(gymnasium.Env, ABC):
         self.day_penalty = day_penalty
         self.current_augmented_date = None
         self.was_reset = 0
+        self.price_scaler = 1
+        self.prev_price = 0
+
+        print("Debugging log returns env")
+        self.use_log_returns = True
 
         def scale_reward_function(r):
             return r * self.scale_reward
@@ -110,7 +115,7 @@ class MoexTradingEnv(gymnasium.Env, ABC):
             self.scale_reward_function = scale_reward_function
 
         self._add_technical_indicators()
-        self._normalize_data()
+        # self._normalize_data()
 
         if True:
             print(self.__dict__)
@@ -332,6 +337,11 @@ class MoexTradingEnv(gymnasium.Env, ABC):
             else:
                 self.probable_reward = self.entry_price
 
+            if self.use_log_returns:
+                obs_data["close"] = np.log(obs_data["close"] / obs_data["close"].shift(1))
+                obs_data["close"] = obs_data["close"].fillna(0)
+                # print(obs_data["close"])
+
             obs = np.concatenate((obs_data.values.flatten(), np.array(
                 [self.pos_dict[self.position], self.row / self.max_holding, self.current_price, self.probable_reward, int(last_minute)]),
                                   action_mask))
@@ -342,6 +352,8 @@ class MoexTradingEnv(gymnasium.Env, ABC):
             traceback.print_exception(exc_type, exc_value, exc_traceback, limit=10)
             raise
 
+        # print(obs)
+
         return obs.astype(np.float32)
 
     def _calculate_reward(self, action):
@@ -349,6 +361,7 @@ class MoexTradingEnv(gymnasium.Env, ABC):
 
         assert self.current_price is not None
         self.wrong_action_flag = False
+
 
         if action == 1:  # open long
             if self.position == "none":
@@ -360,7 +373,10 @@ class MoexTradingEnv(gymnasium.Env, ABC):
 
         elif action == 2:  # close long
             if self.position == 'long':
-                profit = self.current_price - self.entry_price
+                if self.use_log_returns:
+                    profit = np.log(self.current_price / self.prev_price)
+                else:
+                    profit = self.current_price - self.entry_price
                 reward = self.scale_reward_function(profit)
                 returns = profit / self.entry_price
                 self.returns.append(returns)
@@ -380,8 +396,14 @@ class MoexTradingEnv(gymnasium.Env, ABC):
 
         elif action == 4:  # close short
             if self.position == 'short':
-                profit = self.entry_price - self.current_price
+
+                if self.use_log_returns:
+                    profit = np.log(self.prev_price / self.current_price)
+                else:
+                    profit = self.current_price - self.current_price
+
                 reward = self.scale_reward_function(profit)
+
                 returns = profit / self.entry_price
                 self.returns.append(returns)
                 self.profits.append(profit)
@@ -390,6 +412,12 @@ class MoexTradingEnv(gymnasium.Env, ABC):
                 self.position = "none"
                 self.row = 0
         else:
+            if self.use_log_returns and self.position == "long":
+                reward = np.log(self.current_price / self.prev_price)
+
+            if self.use_log_returns and self.position == "short":
+                reward = np.log(self.prev_price / self.current_price)
+
             self.row += 1
             if self.row > self.max_holding:
                 reward -= self.eta
@@ -401,6 +429,11 @@ class MoexTradingEnv(gymnasium.Env, ABC):
 
         if self.transfer_day_flag:
             reward -= self.day_penalty
+
+        self.prev_price = self.current_price
+
+
+        print(reward)
 
         return reward
 
@@ -463,10 +496,10 @@ class MoexTradingEnv(gymnasium.Env, ABC):
         self.current_augmented_date = None
         self.was_reset += 1
         self.transfer_day_flag = False
-        self.returns.clear()
-        self.profits.clear()
-        self.longs = 0
-        self.shorts = 0
+        # self.returns.clear()
+        # self.profits.clear()
+        # self.longs = 0
+        # self.shorts = 0
 
         if hasattr(self, 'current_augmented_day'):
             del self.current_augmented_day

@@ -41,6 +41,28 @@ def create_dataset(tickers=global_tickers, num_weeks=36):
     return data
 
 
+def create_dummy_dataset(data):
+    """
+    Принимает словарь {ticker: DataFrame} и возвращает такой же словарь,
+    но в каждом DataFrame оставлены только колонки 'begin' и 'close',
+    при этом 'close' — монотонно возрастает.
+    """
+    dummy_data = {}
+    for ticker, df in data.items():
+        df_sorted = df.sort_values(by='begin').reset_index(drop=True)
+
+        close_values = range(100, 100 + len(df_sorted))
+
+        dummy_df = pd.DataFrame({
+            'begin': df_sorted['begin'],
+            'close': close_values
+        })
+
+        dummy_data[ticker] = dummy_df
+
+    return dummy_data
+
+
 def load_data_from_pickle(filename):
     with open(filename, 'rb') as f:
         data = pickle.load(f)

@@ -38,10 +38,10 @@ def train_rnn_rl(df_train, df_val, ticker, window_size, alpha, total_timesteps, 
             n_features=1,
             hidden_size=hidden_size,   
             num_lstm_layers=lstm_layers,
-            dropout=0.2,
+            dropout=0.0,
             use_log_return=False,
         ),
-        net_arch=[dict(pi=[features_dim, 256], vf=[features_dim, 256])],
+        net_arch=[dict(pi=[features_dim, 128], vf=[features_dim, 128])],
         normalize_images=False,
 
     )
@@ -126,22 +126,25 @@ class CustomRNNFeatureExtractor(BaseFeaturesExtractor):
             num_layers=num_lstm_layers,
             batch_first=True,
             dropout = dropout,
-
         )
         
         self.extra_features = 10  # position, row, reward/profit, last_minute, entry_price, mask
-        
+
+        hidden_size = window_size
         self.fc = nn.Sequential(
             nn.Linear(hidden_size + self.extra_features, 256),
             nn.ReLU(),
             nn.Linear(256, features_dim)
         )
 
+        print("WARNING: debugging RL RNN is off")
+
+
     def forward(self, observations: th.Tensor) -> th.Tensor:
         batch_size = observations.shape[0]
 
         time_series = observations[:, :self.window_size * self.n_features]
-        time_series = time_series.view(batch_size, self.window_size, self.n_features)
+        # time_series = time_series.view(batch_size, self.window_size, self.n_features)
 
         # print(time_series)
 
@@ -156,12 +159,12 @@ class CustomRNNFeatureExtractor(BaseFeaturesExtractor):
 
         extra_features = observations[:, -self.extra_features:]
         
-        lstm_out, _ = self.lstm(time_series)
-        lstm_last = lstm_out[:, -1, :]  
+        #lstm_out, _ = self.lstm(time_series)
+        #lstm_last = lstm_out[:, -1, :]
 
         # print(extra_features)
 
-        combined = th.cat([lstm_last, extra_features], dim=1)
+        combined = th.cat([time_series, extra_features], dim=1)
         
         features = self.fc(combined)
         
