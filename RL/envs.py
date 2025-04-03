@@ -98,6 +98,7 @@ class MoexTradingEnv(gymnasium.Env, ABC):
         self.day_penalty = day_penalty
         self.current_augmented_date = None
         self.was_reset = 0
+        self.prev_price = 0
 
         def scale_reward_function(r):
             return r * self.scale_reward
@@ -327,10 +328,10 @@ class MoexTradingEnv(gymnasium.Env, ABC):
             if self.row == self.max_holding:
                 self.probable_reward -= self.eta
 
-            if self.entry_price == 0:
-                self.probable_reward = self.current_price
+            if self.prev_price == 0:
+                self.probable_reward = 0
             else:
-                self.probable_reward = self.entry_price
+                self.probable_reward = self.current_price / self.prev_price
 
             obs = np.concatenate((obs_data.values.flatten(), np.array(
                 [self.pos_dict[self.position], self.row / self.max_holding, self.current_price, self.probable_reward, int(last_minute)]),
@@ -341,6 +342,9 @@ class MoexTradingEnv(gymnasium.Env, ABC):
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exception(exc_type, exc_value, exc_traceback, limit=10)
             raise
+
+
+        # print(obs)
 
         return obs.astype(np.float32)
 
@@ -360,11 +364,14 @@ class MoexTradingEnv(gymnasium.Env, ABC):
 
         elif action == 2:  # close long
             if self.position == 'long':
-                profit = self.current_price - self.entry_price
+                # profit = self.current_price - self.entry_price
+                profit = self.current_price - self.prev_price
                 reward = self.scale_reward_function(profit)
-                returns = profit / self.entry_price
+
+                real_profit = self.current_price - self.entry_price
+                returns = real_profit / self.entry_price
                 self.returns.append(returns)
-                self.profits.append(profit)
+                self.profits.append(real_profit)
                 self.longs += 1
                 self.entry_price = 0
                 self.position = "none"
@@ -380,16 +387,28 @@ class MoexTradingEnv(gymnasium.Env, ABC):
 
         elif action == 4:  # close short
             if self.position == 'short':
-                profit = self.entry_price - self.current_price
+                # profit = self.entry_price - self.current_price
+                profit = self.prev_price - self.current_price
                 reward = self.scale_reward_function(profit)
-                returns = profit / self.entry_price
+
+                real_profit = self.entry_price - self.current_price
+                returns = real_profit / self.entry_price
                 self.returns.append(returns)
-                self.profits.append(profit)
+                self.profits.append(real_profit)
+
                 self.shorts += 1
                 self.entry_price = 0
                 self.position = "none"
                 self.row = 0
         else:
+            if self.position == "long":
+                reward = self.current_price - self.prev_price
+
+            if self.position == "short":
+                reward = self.prev_price - self.current_price
+
+            reward = self.scale_reward_function(reward)
+
             self.row += 1
             if self.row > self.max_holding:
                 reward -= self.eta
@@ -401,6 +420,10 @@ class MoexTradingEnv(gymnasium.Env, ABC):
 
         if self.transfer_day_flag:
             reward -= self.day_penalty
+
+        self.prev_price = self.current_price
+
+        # print(reward)
 
         return reward
 
@@ -463,10 +486,10 @@ class MoexTradingEnv(gymnasium.Env, ABC):
         self.current_augmented_date = None
         self.was_reset += 1
         self.transfer_day_flag = False
-        self.returns.clear()
-        self.profits.clear()
-        self.longs = 0
-        self.shorts = 0
+        # self.returns.clear()
+        # self.profits.clear()
+        # self.longs = 0
+        # self.shorts = 0
 
         if hasattr(self, 'current_augmented_day'):
             del self.current_augmented_day
@@ -569,5 +592,5 @@ def create_masked_env(base_env):
     # env = base_env(**args)
     masked_env = ActionMasker(base_env, action_mask_fn=lambda env: env.get_action_mask())
     dummy_env = DummyVecEnv([lambda: masked_env])
-    normalized_env = VecNormalize(dummy_env, norm_obs=False, norm_reward=False)
+    normalized_env = VecNormalize(dummy_env, norm_obs=True, norm_reward=True)
     return normalized_env

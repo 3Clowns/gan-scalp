@@ -38,7 +38,7 @@ def train_rnn_rl(df_train, df_val, ticker, window_size, alpha, total_timesteps, 
             n_features=1,
             hidden_size=hidden_size,   
             num_lstm_layers=lstm_layers,
-            dropout=0.2,
+            dropout=0.0,
             use_log_return=False,
         ),
         net_arch=[dict(pi=[features_dim, 256], vf=[features_dim, 256])],
@@ -130,17 +130,25 @@ class CustomRNNFeatureExtractor(BaseFeaturesExtractor):
         )
         
         self.extra_features = 10  # position, row, reward/profit, last_minute, entry_price, mask
-        
+        self.ln = nn.LayerNorm(window_size * n_features, eps=1e-6)
+
+
+
         self.fc = nn.Sequential(
-            nn.Linear(hidden_size + self.extra_features, 256),
-            nn.ReLU(),
-            nn.Linear(256, features_dim)
+            nn.LayerNorm(hidden_size + self.extra_features, eps=1e-6),
+            nn.Linear(hidden_size + self.extra_features, features_dim),
+            nn.LayerNorm(features_dim),
+            #nn.ReLU(),
+            #nn.Linear(256, features_dim)
         )
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
         batch_size = observations.shape[0]
 
+        # print(observations.shape)
+
         time_series = observations[:, :self.window_size * self.n_features]
+        time_series = self.ln(time_series)
         time_series = time_series.view(batch_size, self.window_size, self.n_features)
 
         # print(time_series)
@@ -155,7 +163,9 @@ class CustomRNNFeatureExtractor(BaseFeaturesExtractor):
         # print(time_series)
 
         extra_features = observations[:, -self.extra_features:]
-        
+
+        # print(extra_features)
+        # time_series =
         lstm_out, _ = self.lstm(time_series)
         lstm_last = lstm_out[:, -1, :]  
 
@@ -164,5 +174,10 @@ class CustomRNNFeatureExtractor(BaseFeaturesExtractor):
         combined = th.cat([lstm_last, extra_features], dim=1)
         
         features = self.fc(combined)
-        
+
+        # print(features)
+        #for i in self.fc.modules():
+        #    print(i.weight)
+        # print(features.shape)
+
         return features

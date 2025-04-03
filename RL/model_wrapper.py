@@ -23,6 +23,7 @@ class RLModelWrapper:
             val_callback_config: dict = None,
             train_env_config: dict = None,
             val_env_config: dict = None,
+            dump_params_to_stdout: bool = True,
     ):
         if config is None:
             config = {}
@@ -34,6 +35,7 @@ class RLModelWrapper:
         self.test_env = self._wrap_env(test_env) if test_env else None
         self.train_env_config = train_env_config
         self.val_env_config = val_env_config
+        self.dump_params_to_stdout = dump_params_to_stdout
 
         print("All envs initialized.")
 
@@ -64,24 +66,19 @@ class RLModelWrapper:
         algo = self.algo.lower()
         policy_type = self.config.get("policy_type", "MlpPolicy")
 
-        lr = self.config.get("learning_rate", 3e-3)
-        n_steps = self.config.get("n_steps", 2048)
-        batch_size = self.config.get("batch_size", 64)
-        n_epochs = self.config.get("n_epochs", 1)
-        device = self.config.get("device", "cpu")
-        policy_kwargs = self.config.get("policy_kwargs", {})
+        model_params_maskable_ppo = {
+            k: self.config.get(k, v)
+            for k, v in self.config.items()
+            if k in MaskablePPO.__init__.__code__.co_varnames
+        }
+
+        if self.dump_params_to_stdout:
+            print("STDOUT model params: ", model_params_maskable_ppo)
 
         if algo == "maskable_ppo":
             self.model = MaskablePPO(
-                policy_type,
-                self.train_env,
-                learning_rate=lr,
-                n_steps=n_steps,
-                batch_size=batch_size,
-                n_epochs=n_epochs,
-                policy_kwargs=policy_kwargs,
-                device=device,
-                verbose=1
+                env=self.train_env,
+                **model_params_maskable_ppo,
             )
         elif algo == "ppo":
             self.model = PPO(

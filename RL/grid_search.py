@@ -42,7 +42,7 @@ def run_trial(args):
         run_name = f"trial_{params['trial_number']}_gpu_{gpu_id}"
 
         wandb.init(
-            project="new RL",
+            project="RL 5.0 hps search",
             reinit=True,
             name=run_name,
             config=params
@@ -87,16 +87,16 @@ def run_trial(args):
 
         profit, _, _, _, _ = evaluate_agent(
             model_wrapper.model, model_wrapper.train_env,
-            max_steps=10000, with_action_logs=False
+            max_steps=20000, with_action_logs=False
         )
 
         real_profit, _, _, _, _ = evaluate_agent(
             model_wrapper.model, model_wrapper.val_env,
-            max_steps=10000, with_action_logs=False,
+            max_steps=20000, with_action_logs=False,
         )
 
         evaluate_agent(
-            model_wrapper.model, model_wrapper.val_env, max_steps=10000, with_action_logs=True
+            model_wrapper.model, model_wrapper.val_env, max_steps=20000, with_action_logs=True
         )
 
         print(f"Testing completed")
@@ -134,43 +134,44 @@ def generate_random_params(param_grid, n_trials):
 
 def run_grid_search(df_train, df_val, ticker, n_trials=100, max_concurrent=6, gpu_ids=[0]):
     param_grid = {
-        # "window_size": list(range(5, 51, 5)),
-        # "learning_rate": [4e-6, 1e-5, 3e-5, 7e-5, 1e-4, 5e-4, 1e-3],
-        # "n_epochs": [3, 7, 11, 15],
-        # "batch_size": [128, 256, 512, 1024, 2048],
-        # "n_steps": [256, 512, 1024, 2048, 4096],
-        # "scale_reward": [1, 10, 100, 1000],
-        # "total_epochs": [4, 8, 16],
-        # "hidden_dim_rnn": [64, 128, 256, 512],
-        # "lstm_layers": [2, 4, 8],
-        # "features_dim": [64, 128, 256, 512],
-        # "ent_coef": [1e-3, 1e-2, 1e-1, 0],
-        # "ent_coef" : [0.001],
-        # "eta" : [0, 1, 0.1, 0.01, 10],
-        # "clip_range" : [0.5, 0.2, 0.1, 0.05],
-        # "gae_lambda" : [0.95, 0.85, 0.8, 0.65, 0.5]
+        "window_size": list(range(5, 51, 5)),
+        "learning_rate": [4e-6, 1e-5, 3e-5, 7e-5, 1e-4, 5e-4, 1e-3],
+        "n_epochs": [3, 7, 11, 15],
+        "batch_size": [128, 256, 512, 1024, 2048],
+        "n_steps": [256, 512, 1024, 2048, 4096],
+        "scale_reward": [1, 10, 100, 1000],
+        "total_epochs": [4, 8, 16],
+        "hidden_dim_rnn": [64, 128, 256, 512],
+        "lstm_layers": [2, 4, 8],
+        "features_dim": [64, 128, 256, 512],
+        "ent_coef": [1e-3, 1e-2, 1e-1, 0],
+        "eta": [0, 1, 0.1, 0.01, 10],
+        "clip_range": [0.5, 0.2, 0.1, 0.05],
+        "gae_lambda": [0.95, 0.85, 0.8, 0.65, 0.5],
+        "day_penalty": [0, 1, 10, 100, 0.1, 0.01]
     }
+    # param_grid = {}
 
     fixed_params = {
         "action_reward": 0,
-        "window_size": 50,
-        "learning_rate": 0.001,
-        "n_epochs": 10,
-        "batch_size": 256,
-        "n_steps": 2048,
-        "scale_reward": 1000,
-        "total_epochs": 5,
-        "hidden_dim_rnn": 256,
-        "lstm_layers": 4,
-        "features_dim": 256,
-        "eta": 0.1,
-        "ent_coef": 0.01,
-        "clip_range": 0.2,
-        "gae_lambda": 0.95,
-        "day_penalty": 0,
+        #"window_size": 50,
+        #"learning_rate": 0.0001,
+        #"n_epochs": 20,
+        #"batch_size": 256,
+        #"n_steps": 2048,
+        #"scale_reward": 1,
+        #"total_epochs": 5,
+       # "hidden_dim_rnn": 256,
+        #"lstm_layers": 1,
+        #"features_dim": 256,
+        #"eta": 0.1,
+        #"ent_coef": 0.01,
+        #"clip_range": 0.2,
+        #"gae_lambda": 0.5,
+        #"day_penalty": 0,
     }
 
-    combinations = generate_all_combinations(param_grid, n_trials)
+    combinations = generate_random_params(param_grid, n_trials)
 
     trial_args = []
     for i, combination in enumerate(combinations):
@@ -184,18 +185,15 @@ def run_grid_search(df_train, df_val, ticker, n_trials=100, max_concurrent=6, gp
 
     with ProcessPoolExecutor(max_workers=max_concurrent) as executor:
         # Запускаем все trials
-        params, value = run_trial(trial_args[0])
-        return params, value, None
-        # futures = [executor.submit(run_trial, args) for args in trial_args]
+        futures = [executor.submit(run_trial, args) for args in trial_args]
 
-        # Собираем результаты
-        """for future in futures:
+        for future in futures:
             try:
                 params, value = future.result()
                 results.append((params, value))
                 print(f"Trial completed: {params['trial_number']}, Value: {value}")
             except Exception as e:
-                print(f"Error processing trial: {str(e)}")"""
+                print(f"Error processing trial: {str(e)}")
 
     results.sort(key=lambda x: x[1], reverse=True)
 
@@ -229,8 +227,8 @@ if __name__ == "__main__":
         df_train=df_train,
         df_val=df_val,
         ticker=ticker,
-        n_trials=1,
-        max_concurrent=1,
+        n_trials=100,
+        max_concurrent=5,
         gpu_ids=gpu_ids
     )
 
