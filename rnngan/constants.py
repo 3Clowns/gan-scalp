@@ -34,17 +34,18 @@ FEATURES = [
     'log_volume'
 ]
 
-LATENT_DIM = 128
-HIDDEN_DIM = 256
+LATENT_DIM = 100
+HIDDEN_DIM = 128
+NUM_LAYERS = 2
 
 # Number of time steps
 WINDOW_SIZE = STOCK_INTERVALS_PER_DAY
 
-BATCH_SIZE = 2048
+BATCH_SIZE = 512
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Penalty for incorrect ratio between open, high, low, close
-LAMBDA = 0.005
+LAMBDA = 0.5
 
 # Number of training sessions for Discriminator and Generator in one epoch
 TRAIN_G = 1

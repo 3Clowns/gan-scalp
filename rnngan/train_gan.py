@@ -8,57 +8,73 @@ from IPython.display import clear_output
 from visualize import plot_gan
 from tqdm import tqdm
 from torch.amp import GradScaler, autocast
-from constants import LATENT_DIM, DEVICE, WINDOW_SIZE, LAMBDA, TRAIN_G, TRAIN_D, INIT_PRICE
+from constants import LATENT_DIM, DEVICE, WINDOW_SIZE, TRAIN_G, TRAIN_D
+from torch import optim
 
 SAVE_PATH = Path('models/')
 SAVE_PATH.mkdir(exist_ok=True)
+            
         
 def train_epoch(generator, discriminator, generator_optimizer, discriminator_optimizer, dataloader) -> tuple[float, float]:
     generator.train()
     discriminator.train()
-
+    
     scaler_G = GradScaler()
     scaler_D = GradScaler()
-    
+
     generator_losses = []
     discriminator_losses = []
-    
+
+    '''scheduler_g = optim.lr_scheduler.ReduceLROnPlateau(
+        generator_optimizer, 
+        mode='min', 
+        patience=7,
+        threshold=0.001,
+        factor=0.5
+    )
+
+    scheduler_d = optim.lr_scheduler.ReduceLROnPlateau(
+        discriminator_optimizer,
+        mode='min',
+        patience=5,
+        threshold=0.01,
+        factor=0.7
+    )'''
+        
     criterion = nn.BCELoss()
 
     for idx, real_samples in enumerate(tqdm(dataloader, desc = "Train", leave = False)):
-        
         real_samples = real_samples.to(DEVICE)
+        
+        z = torch.randn(real_samples.size(0), WINDOW_SIZE, LATENT_DIM).to(DEVICE)
+        with torch.no_grad():
+            fake_samples = generator(z)
         real_labels = torch.ones(real_samples.shape[0]).to(DEVICE)
         fake_labels = torch.zeros(real_samples.shape[0]).to(DEVICE)
         
-        z = torch.randn(real_samples.shape[0], LATENT_DIM, WINDOW_SIZE).to(DEVICE)
-
-        with torch.no_grad():
-            raw_fake = generator(z)
-
         # Discriminator
         for _ in range(TRAIN_D):
             discriminator_optimizer.zero_grad()
             real_loss = criterion(discriminator(real_samples), real_labels)
-            fake_loss = criterion(discriminator(raw_fake.detach()), fake_labels)
+            fake_loss = criterion(discriminator(fake_samples.detach()), fake_labels)
             discriminator_loss = real_loss + fake_loss
+            
             discriminator_loss.backward()
-            #torch.nn.utils.clip_grad_norm_(discriminator.parameters(), 1.0)
-            discriminator_optimizer.step()       
+            #torch.nn.utils.clip_grad_norm_(discriminator.parameters(), 0.5)
+            discriminator_optimizer.step()
+        discriminator_losses.append(discriminator_loss.item())
 
         # Generator
         for _ in range(TRAIN_G):
-            z = torch.randn(real_samples.shape[0], LATENT_DIM, WINDOW_SIZE).to(DEVICE)
-            raw_fake = generator(z)
+            z = torch.randn(real_samples.size(0), WINDOW_SIZE, LATENT_DIM).to(DEVICE)
+            fake_samples = generator(z)
             generator_optimizer.zero_grad()
-            generator_loss = criterion(discriminator(raw_fake), real_labels)
+            generator_loss = criterion(discriminator(fake_samples), real_labels)
             generator_loss.backward()
-            #torch.nn.utils.clip_grad_norm_(discriminator.parameters(), 1.0)
+            #torch.nn.utils.clip_grad_norm_(discriminator.parameters(), 0.5)
             generator_optimizer.step()
-            
-        discriminator_losses.append(discriminator_loss.item())    
         generator_losses.append(generator_loss.item())
-        
+    
     return np.mean(generator_losses), np.mean(discriminator_losses)
 
 

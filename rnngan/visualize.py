@@ -3,28 +3,24 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import torch
-from constants import DEVICE, WINDOW_SIZE, LATENT_DIM, FEATURES, INIT_PRICE
+from constants import DEVICE, WINDOW_SIZE, INIT_PRICE, LATENT_DIM, FEATURES
 import os
 
-save_dir: str = "plots_tcngan"
+save_dir: str = "plots_rnngan"
 
 @torch.no_grad()
 def generate_samples(generator, seq_len: int = None, n_samples: int = 1) -> pd.DataFrame:
     generator.eval()
     seq_len = seq_len or WINDOW_SIZE
     
-    gen_len = seq_len if seq_len == WINDOW_SIZE else seq_len + 10
-    z = torch.randn(n_samples, LATENT_DIM, gen_len, device=DEVICE)
+    z = torch.randn(n_samples, seq_len, LATENT_DIM).to(DEVICE)
     
-    samples = generator(z).cpu()
-    samples = samples.permute(0, 2, 1).numpy()
+    samples = generator(z).cpu().numpy()
     
-    df = pd.DataFrame(
+    return pd.DataFrame(
         samples.reshape(-1, len(FEATURES)),
         columns=FEATURES
     )
-    
-    return df
 
 '''@torch.no_grad()
 def denormalize_features(features: pd.DataFrame, scalers: dict, initial_value: float) -> pd.DataFrame:
@@ -125,14 +121,12 @@ def denormalize_features(features: pd.DataFrame, scalers: dict, initial_low: flo
                           columns=['open', 'high', 'low', 'close', 'volume'])
     
 
-    # Проверка на Inf (бесконечности)
     assert not np.isinf(denorm['log_dh']).any(), "Обнаружены Inf в log_dh!"
     assert not np.isinf(denorm['delta_c']).any(), "Обнаружены Inf в delta_c!"
     assert not np.isinf(denorm['lrl']).any(), "Обнаружены Inf в lrl!"
     assert not np.isinf(denorm['delta_o']).any(), "Обнаружены Inf в delta_o!"
     assert not np.isinf(denorm['log_volume']).any(), "Обнаружены Inf в log_volume!"
 
-    # Проверка на NaN (не числа)
     assert not np.isnan(denorm['log_dh']).any(), "Обнаружены NaN в log_dh!"
     assert not np.isnan(denorm['delta_c']).any(), "Обнаружены NaN в delta_c!"
     assert not np.isnan(denorm['lrl']).any(), "Обнаружены NaN в lrl!"
@@ -178,20 +172,19 @@ def denormalize_features(features: pd.DataFrame, scalers: dict, initial_low: flo
     restored['open'] = np.clip(restored['open'], 0.0, PRICE_MAX)
     
     return restored[['open', 'high', 'low', 'close', 'volume']].round(6)
-    
 
 @torch.no_grad()
 def plot_gan(generator, generator_losses: list[float], discriminator_losses: list[float], epoch: int, df_real: pd.DataFrame, scalers: dict):
 
     n_samples = len(df_real) // WINDOW_SIZE
     df_fake_norm = generate_samples(generator, seq_len=WINDOW_SIZE, n_samples=n_samples)
-    print(df_fake_norm.shape)
+    
     df_fake = denormalize_features(df_fake_norm, scalers, INIT_PRICE)
 
     os.makedirs(save_dir, exist_ok=True)
-
+    # Real data
     plt.figure(figsize=(20, 12))
-
+    
     price_cols = ['open', 'high', 'low', 'close', 'volume']
     for i, feature in enumerate(price_cols, 1):
         plt.subplot(3, 2, i)

@@ -1,11 +1,12 @@
 import numpy as np
+import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
 class TimeSeriesDataset(Dataset):
-    
-    def __init__(self, data, seq_len):
-        self.data = data
+    def __init__(self, data: pd.DataFrame, seq_len: int, features: list):
+        self.data = data[features].values
+        self.features = features
         self.seq_len = seq_len
 
     def __len__(self):
@@ -13,5 +14,4 @@ class TimeSeriesDataset(Dataset):
 
     def __getitem__(self, idx):
         x = self.data[idx:idx + self.seq_len]
-        x = torch.FloatTensor(x).unsqueeze(0)
-        return x
+        return torch.FloatTensor(x).permute(1, 0)
