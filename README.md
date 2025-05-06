@@ -15,7 +15,8 @@ python3 grid_search.py
 1) swtich to a gan branch ```git checkout gan```
 2) clone the branch with ```git clone```
 3) install dependencies with ```python
-pip install -r gan_requirements.txt```
+pip install -r gan_requirements.txt
+```
 5) drop data csv into tcngan folder
 6) choose type of GAN to train and run training in its folder with
 ```python
