@@ -3,7 +3,7 @@ from optuna.pruners import MedianPruner
 from optuna.samplers import TPESampler
 from scipy.constants import value
 
-from RL.envs import MoexTradingEnv, TestingTradingEnv
+from envs import MoexTradingEnv, TestingTradingEnv
 from train import train_rnn_rl
 import os
 from create_data import load_dataset, create_dataset, save_dataset
