@@ -30,6 +30,11 @@ You can disable with_action_logs (set it to False) if you don't want to see actu
 
 If you want you can login into your wandb with your token and track your progress during training. 
 
+Results example 
+
+![image](https://github.com/user-attachments/assets/d5c0576f-127b-4c59-aca2-3385112d41bd)
+
+
 
 ## GAN training
 Data for training can be downloaded [here](https://drive.google.com/file/d/1OHlZT5b5a9qAnQxwF8-x6UO3OO8Lv31N/view?usp=sharing)
