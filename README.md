@@ -18,4 +18,4 @@ python3 grid_search.py
 4) choose type of GAN to train and run training in its folder with
 5) ```python
    python main.py
-6) ``` 
+   ``` 
