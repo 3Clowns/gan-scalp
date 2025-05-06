@@ -20,6 +20,9 @@ cd RL
 pip install -r rl_requirements.txt
 python3 grid_search.py
 ```
+All the results (total profit, sharp ratio, etc) on validation set you will see in file logs.txt every 64k timestemps of training. 
+
+If you want you can login into your wandb with your token and track your progress during training. 
 
 
 ## GAN training
