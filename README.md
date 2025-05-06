@@ -18,6 +18,7 @@ python3 grid_search.py
 ```
 ## GAN training
 Data for training can be downloaded [here](https://drive.google.com/file/d/1OHlZT5b5a9qAnQxwF8-x6UO3OO8Lv31N/view?usp=sharing)
+
 To run Generative Adversarial Network training follow these steps below:
 1) swtich to a gan branch ```git checkout gan```
 2) clone the branch with ```git clone```
