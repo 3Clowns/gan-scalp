@@ -17,6 +17,8 @@ To run Reinforcement learning agent training simply run the following command in
 python3 grid_search.py
 ```
 ## GAN training
+Data for training can be downloaded [here](https://drive.google.com/file/d/1OHlZT5b5a9qAnQxwF8-x6UO3OO8Lv31N/view?usp=sharing)
+
 To run Generative Adversarial Network training follow these steps below:
 1) clone this branch with ```git clone```
 2) install dependencies with
