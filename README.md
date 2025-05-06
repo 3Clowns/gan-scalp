@@ -22,6 +22,12 @@ python3 grid_search.py
 ```
 All the results (total profit, sharp ratio, etc) on validation set you will see in file logs.txt every 64k timestemps of training. 
 
+In eval.py you can find an option in line 152 
+```python
+ val_reward_true, za_val_true, nza_val_true, wa_val_true, info = evaluate_agent(self.model, create_masked_env(TestingTradingEnv(**self.val_env_config)), max_steps=min(20000, len(self.df_val)) - 1, with_action_logs=True)
+ ```
+You can disable with_action_logs (set it to False) if you don't want to see actual descisions the were made by agent during evaluation.  
+
 If you want you can login into your wandb with your token and track your progress during training. 
 
 
