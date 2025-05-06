@@ -7,6 +7,7 @@ Git repository consists of 2 branches:
 2) gan branch with RNN and TCN GANs
 
 Data for training can be downloaded [here](https://drive.google.com/file/d/1OHlZT5b5a9qAnQxwF8-x6UO3OO8Lv31N/view?usp=sharing)
+
 To run Reinforcement learning agent training simply run the following command inside RL folder
 ```python
 python3 grid_search.py
