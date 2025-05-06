@@ -30,7 +30,7 @@ You can disable with_action_logs (set it to False) if you don't want to see actu
 
 If you want you can login into your wandb with your token and track your progress during training. 
 
-Results example 
+Our results 
 
 ![image](https://github.com/user-attachments/assets/d5c0576f-127b-4c59-aca2-3385112d41bd)
 
