@@ -227,8 +227,8 @@ if __name__ == "__main__":
         df_train=df_train,
         df_val=df_val,
         ticker=ticker,
-        n_trials=100,
-        max_concurrent=5,
+        n_trials=1,
+        max_concurrent=1,
         gpu_ids=gpu_ids
     )
 
