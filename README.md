@@ -9,7 +9,7 @@ Git repository consists of 2 branches:
 You are now in **main** branch
 
 ## EDA
-To see Exploratory Data Analysis for Lukoil stocks simply download ```EDA.ipynb``` and open it in environment of your choice (Google Colab, Jupyter Notebook, etc)
+To see Exploratory Data Analysis for Lukoil stocks simply download ```EDA.ipynb``` and open it in an environment of your choice (Google Colab, Jupyter Notebook, etc)
 
 ## RL setup
 To run Reinforcement learning agent training simply run the following command inside RL folder
