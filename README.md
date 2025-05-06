@@ -16,6 +16,6 @@ python3 grid_search.py
 2) clone the branch with ```git clone```
 3) drop data csv into tcngan folder
 4) choose type of GAN to train and run training in its folder with
-5) ```python
+```python
    python main.py
    ``` 
