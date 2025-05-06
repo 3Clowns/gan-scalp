@@ -12,10 +12,16 @@ You are now in **main** branch
 To see Exploratory Data Analysis for Lukoil stocks simply download ```EDA.ipynb``` and open it in an environment of your choice (Google Colab, Jupyter Notebook, etc)
 
 ## RL setup
-To run Reinforcement learning agent training simply run the following command inside RL folder
+Clone the main branch  ```git clone```
+
+To run Reinforcement learning agent training simply run the following command from cloned repo
 ```python
+cd RL
+pip install -r rl_requirements.txt
 python3 grid_search.py
 ```
+
+
 ## GAN training
 Data for training can be downloaded [here](https://drive.google.com/file/d/1OHlZT5b5a9qAnQxwF8-x6UO3OO8Lv31N/view?usp=sharing)
 
