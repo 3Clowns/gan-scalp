@@ -6,3 +6,4 @@ ipython
 tqdm
 seaborn
 matplotlib
+statsmodels
