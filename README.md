@@ -37,3 +37,18 @@ pip install -r gan_requirements.txt
 ```python
    python main.py
    ``` 
+## Bootstrap
+Data for bootstrap can be downloaded [here](https://drive.google.com/file/d/1OHlZT5b5a9qAnQxwF8-x6UO3OO8Lv31N/view?usp=sharing)
+
+To run bootstrap follow these steps below:
+1) swtich to a gan branch ```git checkout gan```
+2) clone the branch with ```git clone```
+3) install dependencies with
+```python
+pip install -r gan_requirements.txt
+```
+4) drop data csv into data folder
+5) run bootstrap in its folder with
+```python
+   python bootstrap.py
+   ``` 
